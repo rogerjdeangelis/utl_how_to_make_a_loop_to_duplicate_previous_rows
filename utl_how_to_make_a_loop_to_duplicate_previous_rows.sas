@@ -2,6 +2,12 @@ How to make a loop to duplicate previous rows
 
 Same result in SAS nad WPS
 
+More recent elegant solution by Mark on the end
+
+Mark Keintz
+Mark Keintz's profile photo
+mkeintz@wharton.upenn.edu
+
 see github
 https://tinyurl.com/y8r3b2hf
 https://github.com/rogerjdeangelis/utl_how_to_make_a_loop_to_duplicate_previous_rows
@@ -128,5 +134,44 @@ run;quit;
 proc print;
 run;quit;
 ');
+
+
+Elegant solution by Mark on the end
+
+Mark Keintz
+Mark Keintz's profile photo
+mkeintz@wharton.upenn.edu
+
+data have;
+input id name $;
+cards4;
+1 Jam
+2 John
+3 Will
+;;;;
+run;quit;
+
+data vneed2 / view=vneed2;
+  set have;
+  position=_n_;
+run;
+
+data want2 (drop=group position);
+
+  declare hash h (dataset:'vneed2');
+    h.definekey('position');
+    h.definedata(all:'Y');
+    h.definedone();
+  if 0 then set have nobs=nhave;
+
+  do group=1 to nhave;
+    do position=1 to group;
+      h.find();
+      output;
+    end;
+  end;
+run;
+
+
 
 
