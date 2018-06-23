@@ -5,11 +5,12 @@ How to make a loop to duplicate previous rows.  Keywords: sas sql join merge big
 
     Same result in SAS nad WPS
     
-    More recent elegant solution by Mark on the end
-
-    Mark Keintz
-    Mark Keintz's profile photo
+    New improved solutions on end
+    Paul Dorfman <sashole@bellsouth.net>
+    Keintz, Mark via listserv.uga.edu
     mkeintz@wharton.upenn.edu
+
+    
     
     see github
     https://tinyurl.com/y8r3b2hf
@@ -177,3 +178,83 @@ How to make a loop to duplicate previous rows.  Keywords: sas sql join merge big
     run;
 
 
+    *                                     _   _               _
+     _ __   _____      __  _ __ ___   ___| |_| |__   ___   __| |___
+    | '_ \ / _ \ \ /\ / / | '_ ` _ \ / _ \ __| '_ \ / _ \ / _` / __|
+    | | | |  __/\ V  V /  | | | | | |  __/ |_| | | | (_) | (_| \__ \
+    |_| |_|\___| \_/\_/   |_| |_| |_|\___|\__|_| |_|\___/ \__,_|___/
+
+    ;
+
+
+    Paul Dorfman <sashole@bellsouth.net>
+    to SAS-L, me
+    Roger,
+
+    Having seen nice and clever solutions offered by yourself and Mark,
+    I couldn't get rid of the feeling that there must be a way to attain
+    the goal without re-reading data, be it from the data set itself,
+    arrays, or a hash table. Finally, it has dawned on me that
+    if one doesn't care about the order of the output records, it
+    can be done as tersely as:
+
+    data want ;
+      set have nobs = n ;
+      do _iorc_ = 0 to n - _n_ ;
+        output ;
+      end ;
+    run ;
+
+    for the simple reason that the 1st record will end up output NOBS times,
+    the 2nd - (NOBS-1) times, and so forth. However, if the output order is important,
+    it's easy to add an indexed variable RID:
+
+    data want (index=(rid)) ;
+      set have nobs = n ;
+      rid = _n_ * (1 + _n_) / 2 ;
+      do _iorc_ = 0 to n - _n_ ;
+        rid + ifn (_iorc_, _n_ - 1 + _iorc_, 0) ;
+        output ;
+      end ;
+    run ;
+
+    and then, whenever WANT is to be read in the desired order, just add the BY statement:
+
+    data ... ;
+      set want ;
+      by rid ;
+      ...
+    run ;
+
+    Best regards
+
+
+
+    Keintz, Mark via listserv.uga.edu
+    to SAS-L
+    Ok, I'll bite.   If RID needs only to be ordered, but not equally spaced:
+
+    data want ;
+      set have nobs = n ;
+      do _iorc_ = 0 to n - _n_ ;
+        rid=  _iorc_ + (_n_-1)/n;
+        output ;
+      end;
+    run ;
+
+    But if the strategy is to use RID as an index in order to support BY RID order,
+    there will be increasing amounts of random-access input over a large
+    file, whose size will be (NHAVE/2 + 0.5) times the size of HAVE.
+
+    In which case, why not enforce order by using random-access on the original
+    small data set?  Yes, it has the disadvantage of rereading observations but
+    the incoming pages of data will not be  saturated with repeated observations,
+    mandating more page reads.
+
+    data want;
+      do p=1 to _n_;
+        set have point=p nobs=nhave;
+        output;
+      end;
+      if _n_=nhave then stop;
+    run;
