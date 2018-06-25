@@ -258,3 +258,34 @@ How to make a loop to duplicate previous rows.  Keywords: sas sql join merge big
       end;
       if _n_=nhave then stop;
     run;
+    
+    
+        https://listserv.uga.edu/cgi-bin/wa?A2=SAS-L;544bd7b4.1806d
+
+    Dan,
+
+    Exactly!!! I knew I was missing something exceedingly simple!
+    Thank you so much. Moreover, it can be simplified even further by
+    getting rid (no pun intended) of the running sum variable sum_n_:
+
+    data want (index=(rid)) ;
+       set have nobs = n ;
+       rid = _n_ * (_n_ + 1) / 2 ;
+       do _iorc_ = _n_ to n ;
+         output ;
+         rid + _iorc_ ;
+       end ;
+    run ;
+
+    Now, as Data _null_ says, that's THE it!
+
+    My mistake was being unable to resist my own stream of the
+    consciousness telling me that the formula for RID must *precede*
+    OUTPUT, wherein lied the resulting necessity to complicate the
+    simple thing by including the conditional part. Your moving it
+    *after* OUTPUT resolved the problem in one fell swoop.
+
+    Best regards,
+
+    Paul Dorfman
+
